@@ -10079,6 +10079,8 @@ class NDFrame(PandasObject, SelectionMixin, indexing.IndexingMixin):
         50%            NaN      2.0
         75%            NaN      2.5
         max            NaN      3.0
+        In this addition I will add an factor "uniques" this factor for number of unique values.
+        uniques
         """
         if self.ndim == 2 and self.columns.size == 0:
             raise ValueError("Cannot describe a DataFrame without columns")
@@ -10106,14 +10108,17 @@ class NDFrame(PandasObject, SelectionMixin, indexing.IndexingMixin):
         formatted_percentiles = format_percentiles(percentiles)
 
         def describe_numeric_1d(series) -> "Series":
+            """uniques"""
             stat_index = (
-                ["count", "mean", "std", "min"] + formatted_percentiles + ["max"]
+                ["count", "mean", "std", "min", "uniques"] + formatted_percentiles + ["max"]
             )
+            """uniques is removing duplicating"""
             d = (
-                [series.count(), series.mean(), series.std(), series.min()]
+                [series.count(), series.mean(), series.std(), series.min(), series.duplicated(keep=’first’)]
                 + series.quantile(percentiles).tolist()
                 + [series.max()]
             )
+            
             return pd.Series(d, index=stat_index, name=series.name)
 
         def describe_categorical_1d(data) -> "Series":
@@ -10167,9 +10172,9 @@ class NDFrame(PandasObject, SelectionMixin, indexing.IndexingMixin):
 
         def describe_timestamp_1d(data) -> "Series":
             # GH-30164
-            stat_index = ["count", "mean", "min"] + formatted_percentiles + ["max"]
+            stat_index = ["count", "mean", "min", "uniques"] + formatted_percentiles + ["max"]
             d = (
-                [data.count(), data.mean(), data.min()]
+                [data.count(), data.mean(), data.min(), data.duplicated(keep=’first’)]
                 + data.quantile(percentiles).tolist()
                 + [data.max()]
             )
